@@ -75,13 +75,23 @@ class Parser:
     def __init__(self, pattern):
         self._pattern = pattern
         self._tokens = Tokenizer(pattern)
+        # initialize left-hand-side and right-hand-side molecules
+        self._lhs = []
+        self._rhs = []
+        self._use_rhs = False
 
     def parse(self):
         self.formula()
 
     def formula(self):
-        return self.molecules() and self.token('ARROW') and \
-            self.molecules() and self.token('END')
+        # Parse left hand side
+        self.molecules()
+        self.token('ARROW')
+        # Parse right hand side
+        self._use_rhs = True
+        self.molecules()
+        # Parse end
+        self.token('END')
 
     def molecules(self):
         while True:
@@ -111,9 +121,7 @@ class Parser:
                     self.token('NUM')
 
             elif self.test('ELEM'):
-                self.token('ELEM')
-                if self.test('NUM'):
-                    self.token('NUM')
+                self.elem_count()
 
             elif first:
                 tok = self._tokens.peek()
@@ -124,6 +132,11 @@ class Parser:
                 return True
 
             first = False
+    
+    def elem_count(self):
+        self.token('ELEM')
+        if self.test('NUM'):
+            self.token('NUM')
 
     def token(self, tokentype):
         token = next(self._tokens)
