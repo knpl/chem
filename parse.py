@@ -110,43 +110,52 @@ class Parser:
             else:
                 return True
 
-    def molecule(self):
-        first = True
+    def molecule(self, mol={}):
+        mol = {}
         while True:
             if self.test('LPAREN'):            
                 self.token('LPAREN')
-                self.molecule()
+                submol = self.molecule()
                 self.token('RPAREN')
+
+                count = 1
                 if self.test('NUM'):
-                    self.token('NUM')
+                    count = int(self.token('NUM').pattern())
+
+                muladd(mol, submol, count)
 
             elif self.test('ELEM'):
-                self.elem_count()
+                elem = self.token('ELEM').pattern()
+                count = 1
+                if self.test('NUM'):
+                    count = int(self.token('NUM').pattern())
 
-            elif first:
-                tok = self._tokens.peek()
-                raise RuntimeError(
-                    'Parse Error: "{}" (type {}) at {} (expected ELEM or LPAREN token).' \
-                    .format(tok.pattern(), tok.type(), tok.start()))
+                mol[elem] = count + (mol[elem] if elem in mol else 0)
             else:
-                return True
+                break
 
-            first = False
+        
+        if len(mol) == 0:
+            tok = self._tokens.peek()
+            raise RuntimeError(
+                'Parse Error: "{}" (type {}) at {} (expected ELEM or LPAREN token).' \
+                .format(tok.pattern(), tok.type(), tok.start()))
+
+        return mol
     
-    def elem_count(self):
-        self.token('ELEM')
-        if self.test('NUM'):
-            self.token('NUM')
-
     def token(self, tokentype):
         token = next(self._tokens)
         if token.type() != tokentype:
             raise RuntimeError('Parse Error: "{}" (type: {}) at {} (expected: {}).' \
                                .format(token.pattern(), token.type(), token.start(), tokentype))
-        return True
+        return token
 
     def test(self, tokentype):
-        return self._tokens.peek().type() == tokentype            
+        return self._tokens.peek().type() == tokentype
+
+    def muladd(mola, molb, n):
+        for elem, count in molb.items():
+            mola[elem] = n * count + (mola[elem] if elem in mola else 0)
 
         
 if __name__ == '__main__':
