@@ -1,5 +1,4 @@
 import re
-import argparse
 
 class Token:
     def __init__(self, tokentype, pattern, start, end):
@@ -80,6 +79,12 @@ class Parser:
         self._rhs = []
         self._use_rhs = False
 
+    def get_lhs(self):
+        return self._lhs
+
+    def get_rhs(self):
+        return self._rhs
+
     def parse(self):
         self.formula()
 
@@ -94,19 +99,19 @@ class Parser:
         self.token('END')
 
     def molecules(self):
+        l = self._rhs if self._use_rhs else self._lhs
         while True:
 
             if self.test('SPACE'):
                 self.token('SPACE')
             
-            self.molecule()
+            l.append(self.molecule())
         
             if self.test('SPACE'):
                 self.token('SPACE')
             
             if self.test('PLUS'):
                 self.token('PLUS')
-
             else:
                 return True
 
@@ -159,17 +164,14 @@ class Parser:
 
         
 if __name__ == '__main__':
-    argparser = argparse.ArgumentParser()
-    argparser.add_argument('pattern', metavar='PATTERN', type=str, help='The pattern.')
-    args = argparser.parse_args()
-
-    if args.pattern:
-        p = Parser(args.pattern)
-        p.parse()
-        print('Success')
-#        for token in Tokenizer(args.pattern):
-#            if token.type() == 'INVALID':
-#                raise RuntimeError('Invalid token: "{}"\n{}\n{}^' \
-#                                   .format(token.pattern(), args.pattern, ' '*token.start()))
-#            print('{}: "{}"'.format(token.type(), token.pattern()))
+    p = Parser('C3H8 + O2 -> CO2 + H2O')
+    p.parse()
+    lhs = p.get_lhs()
+    rhs = p.get_rhs()
+    print('Left hand side:')
+    for d in lhs:
+        print(d)
+    print('\nRight hand side:')
+    for d in rhs:
+        print(d)
             
