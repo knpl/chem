@@ -1,4 +1,5 @@
 import re
+import numpy as np
 
 class Token:
     def __init__(self, tokentype, pattern, start, end):
@@ -162,6 +163,50 @@ class Parser:
         for elem, count in molb.items():
             mola[elem] = n * count + (mola[elem] if elem in mola else 0)
 
+
+def vec(mol, revindex, n):
+    v = [0]*n
+    for elem, count in mol.items():
+        v[revindex[elem]] = count
+    return v
+
+def solve(lhs, rhs):
+    elems = set()
+    for mol in lhs:
+        for elem in mol.keys():
+            elems.add(elem)
+    for mol in rhs:
+        for elem in mol.keys():
+            elems.add(elem)
+    index = list(sorted(elems))
+    revindex = {elem:idx for idx,elem in enumerate(index)}
+    n = len(index)
+
+    print('Element index:')
+    print(index)
+    print('Reverse index:')
+    print(revindex)
+
+    lhsvecs = [vec(mol, revindex, n) for mol in lhs]
+    rhsvecs = [vec(mol, revindex, n) for mol in rhs]
+
+    print('Left hand side:')
+    for v in lhsvecs:
+        print(v)
+    print('Right hand side:')
+    for v in rhsvecs:
+        print(v)
+
+    system = np.zeros((len(index), len(lhs) + len(rhs)), dtype=np.int32)
+    for col, mol in enumerate(lhs):
+        for elem, count in mol.items():
+            system[revindex[elem], col] = count
+    for col, mol in enumerate(rhs, len(lhs)):
+        for elem, count in mol.items():
+            system[revindex[elem], col] = -count
+    print('System of equations:')
+    print(system)
+
         
 if __name__ == '__main__':
     p = Parser('C3H8 + O2 -> CO2 + H2O')
@@ -174,4 +219,6 @@ if __name__ == '__main__':
     print('\nRight hand side:')
     for d in rhs:
         print(d)
+
+    solve(lhs, rhs)
             
