@@ -187,16 +187,6 @@ def solve(lhs, rhs):
     print('Reverse index:')
     print(revindex)
 
-    lhsvecs = [vec(mol, revindex, n) for mol in lhs]
-    rhsvecs = [vec(mol, revindex, n) for mol in rhs]
-
-    print('Left hand side:')
-    for v in lhsvecs:
-        print(v)
-    print('Right hand side:')
-    for v in rhsvecs:
-        print(v)
-
     system = np.zeros((len(index), len(lhs) + len(rhs)), dtype=np.int32)
     for col, mol in enumerate(lhs):
         for elem, count in mol.items():
@@ -206,6 +196,35 @@ def solve(lhs, rhs):
             system[revindex[elem], col] = -count
     print('System of equations:')
     print(system)
+
+    rowreduce(system)
+
+def gcd(a,b):
+    (a, b) = (abs(a), abs(b))
+    while b != 0:
+        (a, b) = (b, a % b)
+    return a
+
+def rowreduce(system):
+    # n rows, m columns
+    (n, m) = system.shape
+    col = 0
+    pivots = 0
+    while pivots < n and col < m:
+        # Find pivot in current column
+        pivot = -1
+        for k in range(pivots, n):
+            if system[k, col] != 0
+                pivot = k
+                break
+        if pivot == -1:
+            col += 1
+            continue
+
+        pivots += 1
+        # Found pivot. Clear remaining column
+        
+
 
         
 if __name__ == '__main__':
