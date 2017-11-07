@@ -1,4 +1,5 @@
 import re
+from functools import reduce
 import numpy as np
 
 class Token:
@@ -201,6 +202,8 @@ def solve(lhs, rhs):
 
 def gcd(a,b):
     (a, b) = (abs(a), abs(b))
+    if a == 0:
+        return b
     while b != 0:
         (a, b) = (b, a % b)
     return a
@@ -214,7 +217,7 @@ def rowreduce(system):
         # Find pivot in current column
         pivot = -1
         for k in range(pivots, n):
-            if system[k, col] != 0
+            if system[k, col] != 0:
                 pivot = k
                 break
         if pivot == -1:
@@ -223,6 +226,11 @@ def rowreduce(system):
 
         pivots += 1
         # Found pivot. Clear remaining column
+        row = system[pivot]
+        sign = -1 if row[col] < 0 else 1
+        rowgcd = reduce(gcd, system[pivot])
+        if rowgcd != 1:
+            system[pivot] //= sign * rowgcd
         
 
 
