@@ -164,13 +164,6 @@ class Parser:
         for elem, count in molb.items():
             mola[elem] = n * count + (mola[elem] if elem in mola else 0)
 
-
-def vec(mol, revindex, n):
-    v = [0]*n
-    for elem, count in mol.items():
-        v[revindex[elem]] = count
-    return v
-
 def solve(lhs, rhs):
     elems = set()
     for mol in lhs:
@@ -197,8 +190,9 @@ def solve(lhs, rhs):
             system[revindex[elem], col] = -count
     print('System of equations:')
     print(system)
-
-    rowreduce(system)
+    print('Row-reduced:')
+    rowred(system, 0, 0)
+    print(system)
 
 def gcd(a,b):
     (a, b) = (abs(a), abs(b))
@@ -207,6 +201,45 @@ def gcd(a,b):
     while b != 0:
         (a, b) = (b, a % b)
     return a
+
+def rowred(system, si, sj):
+    (n, m) = system.shape
+    if si >= n or sj >= m: # Done
+        return
+
+    pval = None
+    for i, j in ((i, j) for j in range(sj, m) for i in range(si, n)):
+        val = system[i,j]
+        if val != 0:
+            (pi, pj) = (i, j)
+            pval = val
+            break
+    if pval == None: # Done
+        return
+
+    # Found pivot
+    prow = system[pi][pj:]
+    rowgcd = reduce(gcd, prow)
+    if rowgcd != 1:
+        prow //= rowgcd
+    if prow[0] < 0:
+        prow = -prow
+
+    pval = prow[0]
+    for k in range(pi+1, n):
+        row = system[k][pj:]
+        val = row[0]
+        if val != 0:
+            g = gcd(val, pval)
+            row *= pval//g
+            row += (val//g)*(-prow if val > 0 else prow)
+
+    # Swap rows if necessary
+    if pi != si:
+        system[[si, pi]] = system[[pi, si]]
+    pi = si
+
+    rowred(system, pi+1, pj+1)
 
 def rowreduce(system):
     # n rows, m columns
@@ -224,16 +257,29 @@ def rowreduce(system):
             col += 1
             continue
 
-        pivots += 1
         # Found pivot. Clear remaining column
-        row = system[pivot]
-        sign = -1 if row[col] < 0 else 1
-        rowgcd = reduce(gcd, system[pivot])
+        prow = system[pivot][col:]
+        rowgcd = reduce(gcd, prow)
         if rowgcd != 1:
-            system[pivot] //= sign * rowgcd
-        
+            prow //= rowgcd
+        if prow[0] < 0:
+            prow = -prow
 
+        pval = prow[0]
+        for k in range(pivot+1, n):
+            row = system[k][col:]
+            val = row[0]
+            if val != 0:
+                g = gcd(val, pval)
+                row *= pval//g
+                row += (val//g)*(-prow if val > 0 else prow)
 
+        # Swap rows if necessary
+        if pivot != pivots:
+            system[[pivots, pivot]] = system[[pivot, pivots]]
+
+        pivots += 1
+        col += 1    
         
 if __name__ == '__main__':
     p = Parser('C3H8 + O2 -> CO2 + H2O')
