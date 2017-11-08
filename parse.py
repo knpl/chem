@@ -1,5 +1,6 @@
 import re
 from functools import reduce
+from itertools import chain
 import numpy as np
 
 class Token:
@@ -117,7 +118,7 @@ class Parser:
             else:
                 return True
 
-    def molecule(self, mol={}):
+    def molecule(self):
         mol = {}
         while True:
             if self.test('LPAREN'):            
@@ -191,7 +192,7 @@ def solve(lhs, rhs):
     print('System of equations:')
     print(system)
     print('Row-reduced:')
-    rowred(system, 0, 0)
+    rowreduce(system)
     print(system)
 
 def gcd(a,b):
@@ -202,50 +203,12 @@ def gcd(a,b):
         (a, b) = (b, a % b)
     return a
 
-def rowred(system, si, sj):
-    (n, m) = system.shape
-    if si >= n or sj >= m: # Done
-        return
-
-    pval = None
-    for i, j in ((i, j) for j in range(sj, m) for i in range(si, n)):
-        val = system[i,j]
-        if val != 0:
-            (pi, pj) = (i, j)
-            pval = val
-            break
-    if pval == None: # Done
-        return
-
-    # Found pivot
-    prow = system[pi][pj:]
-    rowgcd = reduce(gcd, prow)
-    if rowgcd != 1:
-        prow //= rowgcd
-    if prow[0] < 0:
-        prow = -prow
-
-    pval = prow[0]
-    for k in range(pi+1, n):
-        row = system[k][pj:]
-        val = row[0]
-        if val != 0:
-            g = gcd(val, pval)
-            row *= pval//g
-            row += (val//g)*(-prow if val > 0 else prow)
-
-    # Swap rows if necessary
-    if pi != si:
-        system[[si, pi]] = system[[pi, si]]
-    pi = si
-
-    rowred(system, pi+1, pj+1)
-
 def rowreduce(system):
     # n rows, m columns
     (n, m) = system.shape
     col = 0
     pivots = 0
+    pcols = []
     while pivots < n and col < m:
         # Find pivot in current column
         pivot = -1
@@ -258,28 +221,29 @@ def rowreduce(system):
             continue
 
         # Found pivot. Clear remaining column
-        prow = system[pivot][col:]
-        rowgcd = reduce(gcd, prow)
-        if rowgcd != 1:
-            prow //= rowgcd
-        if prow[0] < 0:
-            prow = -prow
-
-        pval = prow[0]
-        for k in range(pivot+1, n):
-            row = system[k][col:]
-            val = row[0]
+        pcols.append(col)
+        prow = system[pivot]
+        pval = prow[col]
+        for k in chain(range(pivots), range(pivot+1, n)):
+            row = system[k]
+            val = row[col]
             if val != 0:
                 g = gcd(val, pval)
                 row *= pval//g
-                row += (val//g)*(-prow if val > 0 else prow)
+                row[col:] -= (val//g)*prow[col:]
 
         # Swap rows if necessary
         if pivot != pivots:
             system[[pivots, pivot]] = system[[pivot, pivots]]
 
         pivots += 1
-        col += 1    
+        col += 1
+
+    for i, j in enumerate(pcols):
+        row = system[i][j:]
+        row //= reduce(gcd, row)
+        if row[0] < 0:
+            row = -row
         
 if __name__ == '__main__':
     p = Parser('C3H8 + O2 -> CO2 + H2O')
