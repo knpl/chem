@@ -243,10 +243,10 @@ def rowreduce(system):
         row = system[i][j:]
         row //= reduce(gcd, row)
         if row[0] < 0:
-            row = -row
+            system[i][j:] = -row
         
 if __name__ == '__main__':
-    p = Parser('C3H8 + O2 -> CO2 + H2O')
+    p = Parser('C3H8 + O2 -> H2O + CO2')
     p.parse()
     lhs = p.get_lhs()
     rhs = p.get_rhs()
