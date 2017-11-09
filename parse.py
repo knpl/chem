@@ -192,8 +192,17 @@ def solve(lhs, rhs):
     print('System of equations:')
     print(system)
     print('Row-reduced:')
-    rowreduce(system)
+    pcols = rowreduce(system)
     print(system)
+    print('Pivot columns:')
+    print(pcols)
+    nonpcols = [i for i in range(system.shape[1]) if i not in pcols]
+    print('Non-pivot columns:')
+    print(nonpcols)
+
+#def lcm(a,b):
+#    (a,b) = (abs(a), abs(b))
+#    (a // gcd(a,b)) * b
 
 def gcd(a,b):
     (a, b) = (abs(a), abs(b))
@@ -244,18 +253,34 @@ def rowreduce(system):
         row //= reduce(gcd, row)
         if row[0] < 0:
             system[i][j:] = -row
+
+    return pcols
         
 if __name__ == '__main__':
-    p = Parser('C3H8 + O2 -> H2O + CO2')
-    p.parse()
-    lhs = p.get_lhs()
-    rhs = p.get_rhs()
-    print('Left hand side:')
-    for d in lhs:
-        print(d)
-    print('\nRight hand side:')
-    for d in rhs:
-        print(d)
+    formulas = ['C3H8 + O2 -> H2O + CO2',
+                'C3H8 + O2 -> CO2 + H2O',
+                'O2 + C3H8 -> H2O + CO2',
+                'O2 + C3H8 -> CO2 + H2O',
+                'H2O + CO2 -> C3H8 + O2',
+                'H2O + CO2 -> O2 + C3H8',
+                'CO2 + H2O -> C3H8 + O2',
+                'CO2 + H2O -> O2 + C3H8']
+    for formula in formulas:
+        p = Parser(formula)
+        p.parse()
+        lhs = p.get_lhs()
+        rhs = p.get_rhs()
+        print('Left hand side:')
+        for d in lhs:
+            print(d)
+        print('\nRight hand side:')
+        for d in rhs:
+            print(d)
+        solve(lhs, rhs)
 
-    solve(lhs, rhs)
+#    a = np.array([[5, 3, 6, -8, -3, -6, 7],
+#              [0, 0, 0, 0, 2, 2, 30],
+#              [-7, 7, 7, 2, 2, -1, 0]])
+#    rowreduce(a)
+#    print(a)
             
