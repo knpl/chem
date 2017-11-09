@@ -191,20 +191,20 @@ def solve(lhs, rhs):
             system[revindex[elem], col] = -count
     print('System of equations:')
     print(system)
-    print('Row-reduced:')
-    pcols = rowreduce(system)
-    print(system)
-    print('Pivot columns:')
-    print(pcols)
-    nonpcols = [i for i in range(system.shape[1]) if i not in pcols]
-    print('Non-pivot columns:')
-    print(nonpcols)
+    print('Solution:')
+    space = nullspace(system)
+    print(space)
 
-#def lcm(a,b):
-#    (a,b) = (abs(a), abs(b))
-#    (a // gcd(a,b)) * b
+def lcm(a, b):
+    if a & b == 0:
+        return 0
+    (a, b) = (abs(a), abs(b))
+    (p, q) = (a, b)
+    while q != 0:
+        (p, q) = (q, p % q)
+    return (a // p) * b
 
-def gcd(a,b):
+def gcd(a, b):
     (a, b) = (abs(a), abs(b))
     if a == 0:
         return b
@@ -212,16 +212,42 @@ def gcd(a,b):
         (a, b) = (b, a % b)
     return a
 
+def nullspace(system):
+    (m, n) = system.shape
+    pivot_cols = rowreduce(system)
+
+    space = []
+    l = 1
+    k = 0
+    pivot_vals = []
+    for j in range(n):
+        if j == pivot_cols[k]: # j pivot column
+            pivot_val = system[k, j]
+            pivot_vals.append(pivot_val)
+            l = lcm(l, pivot_val)
+            k += 1
+            if k == m:
+                break
+        else: # j non-pivot column
+            solution = [0]*n
+            for i in range(k):
+                (pcol, pval) = (pivot_cols[k], pivot_vals[k])
+                solution[pcol] = -(l // pval) * system[k, j]
+            solution[k] = l
+            space.append(solution)
+
+    return space
+
 def rowreduce(system):
-    # n rows, m columns
-    (n, m) = system.shape
+    # m rows, n columns
+    (m, n) = system.shape
     col = 0
     pivots = 0
     pcols = []
-    while pivots < n and col < m:
+    while pivots < m and col < n:
         # Find pivot in current column
         pivot = -1
-        for k in range(pivots, n):
+        for k in range(pivots, m):
             if system[k, col] != 0:
                 pivot = k
                 break
@@ -233,7 +259,7 @@ def rowreduce(system):
         pcols.append(col)
         prow = system[pivot]
         pval = prow[col]
-        for k in chain(range(pivots), range(pivot+1, n)):
+        for k in chain(range(pivots), range(pivot+1, m)):
             row = system[k]
             val = row[col]
             if val != 0:
