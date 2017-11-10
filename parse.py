@@ -177,11 +177,6 @@ def solve(lhs, rhs):
     revindex = {elem:idx for idx,elem in enumerate(index)}
     n = len(index)
 
-    print('Element index:')
-    print(index)
-    print('Reverse index:')
-    print(revindex)
-
     system = np.zeros((len(index), len(lhs) + len(rhs)), dtype=np.int32)
     for col, mol in enumerate(lhs):
         for elem, count in mol.items():
@@ -189,14 +184,11 @@ def solve(lhs, rhs):
     for col, mol in enumerate(rhs, len(lhs)):
         for elem, count in mol.items():
             system[revindex[elem], col] = -count
-    print('System of equations:')
-    print(system)
-    print('Solution:')
     space = nullspace(system)
     print(space)
 
 def lcm(a, b):
-    if a & b == 0:
+    if a == 0 or b == 0:
         return 0
     (a, b) = (abs(a), abs(b))
     (p, q) = (a, b)
@@ -215,25 +207,32 @@ def gcd(a, b):
 def nullspace(system):
     (m, n) = system.shape
     pivot_cols = rowreduce(system)
+    print(pivot_cols)
 
     space = []
     l = 1
     k = 0
+    next_pivot_col = pivot_cols
     pivot_vals = []
     for j in range(n):
-        if j == pivot_cols[k]: # j pivot column
+        if j in pivot_cols: # j pivot column
             pivot_val = system[k, j]
             pivot_vals.append(pivot_val)
             l = lcm(l, pivot_val)
             k += 1
-            if k == m:
-                break
         else: # j non-pivot column
+            col = system[:k, j]
             solution = [0]*n
-            for i in range(k):
-                (pcol, pval) = (pivot_cols[k], pivot_vals[k])
-                solution[pcol] = -(l // pval) * system[k, j]
-            solution[k] = l
+            g = l
+            for i, v in enumerate(col):
+                (pcol, pval) = (pivot_cols[i], pivot_vals[i])
+                entry = -(l//pval)*v
+                solution[pcol] = entry
+                g = gcd(g, entry)
+
+            for pcol in pivot_cols:
+                solution[pcol] //= g
+            solution[j] = l // g
             space.append(solution)
 
     return space
@@ -283,30 +282,33 @@ def rowreduce(system):
     return pcols
         
 if __name__ == '__main__':
-    formulas = ['C3H8 + O2 -> H2O + CO2',
-                'C3H8 + O2 -> CO2 + H2O',
-                'O2 + C3H8 -> H2O + CO2',
-                'O2 + C3H8 -> CO2 + H2O',
-                'H2O + CO2 -> C3H8 + O2',
-                'H2O + CO2 -> O2 + C3H8',
-                'CO2 + H2O -> C3H8 + O2',
-                'CO2 + H2O -> O2 + C3H8']
-    for formula in formulas:
-        p = Parser(formula)
-        p.parse()
-        lhs = p.get_lhs()
-        rhs = p.get_rhs()
-        print('Left hand side:')
-        for d in lhs:
-            print(d)
-        print('\nRight hand side:')
-        for d in rhs:
-            print(d)
-        solve(lhs, rhs)
+    #formulas = ['C3H8 + O2 -> H2O + CO2',
+    #            'C3H8 + O2 -> CO2 + H2O',
+    #            'O2 + C3H8 -> H2O + CO2',
+    #            'O2 + C3H8 -> CO2 + H2O',
+    #            'H2O + CO2 -> C3H8 + O2',
+    #            'H2O + CO2 -> O2 + C3H8',
+    #            'CO2 + H2O -> C3H8 + O2',
+    #            'CO2 + H2O -> O2 + C3H8']
+    #for formula in formulas:
+    #    p = Parser(formula)
+    #    p.parse()
+    #    lhs = p.get_lhs()
+    #    rhs = p.get_rhs()
+    #    print('Left hand side:')
+    #    for d in lhs:
+    #        print(d)
+    #    print('\nRight hand side:')
+    #    for d in rhs:
+    #        print(d)
+    #    solve(lhs, rhs)
 
-#    a = np.array([[5, 3, 6, -8, -3, -6, 7],
-#              [0, 0, 0, 0, 2, 2, 30],
-#              [-7, 7, 7, 2, 2, -1, 0]])
-#    rowreduce(a)
-#    print(a)
+    a = np.array([
+        [ 0, 3, 6,-8,-3, 0, 48],
+        [ 0, 0, 0, 0, 0, 3, 12],
+        [ 0, 0, 0, 0, 0, 0, 0]])
+    print('System of equations:\n{}\n'.format(a))
+    space = nullspace(a)
+    print('Reduced system of equations:\n{}\n'.format(a))
+    print('Nullspace:\n{}\n'.format('\n'.join(str(v) for v in space)))
             
